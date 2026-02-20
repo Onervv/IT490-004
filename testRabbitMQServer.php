@@ -4,11 +4,19 @@ require_once('path.inc');
 require_once('get_host_info.inc');
 require_once('rabbitMQLib.inc');
 
-function doLogin($username,$password)
+function doLogin($request)
 {
+    //var_dump($request);
+    $username = $request['username'];
+    $password = $request['password'];
+    
+    var_dump($username);
+    var_dump($password);
+
     // lookup username in databas
     // check password
-    return true;
+    return array("returnCode" => '0', 'message'=>"Server received request and processed");
+    //return true;
     //return false if not valid
 }
 
@@ -24,16 +32,19 @@ function requestProcessor($request)
   {
     case "login":
       return doLogin($request['username'],$request['password']);
+      echo "doing login stuff".PHP_EOL;
     case "validate_session":
       return doValidate($request['sessionId']);
+      echo "Validate some stuff".PHP_EOL;
   }
   return array("returnCode" => '0', 'message'=>"Server received request and processed");
 }
 
-$server = new rabbitMQServer("testRabbitMQ.ini","testServer");
+$server = new rabbitMQServer("testRabbitMQ.ini","testServer2");
 
 echo "testRabbitMQServer BEGIN".PHP_EOL;
-$server->process_requests('requestProcessor');
+//$server->process_requests('requestProcessor');
+$server->process_requests('doLogin');
 echo "testRabbitMQServer END".PHP_EOL;
 exit();
 ?>
