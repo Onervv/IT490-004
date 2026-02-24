@@ -192,19 +192,21 @@ class rabbitMQClient
 		$uid = uniqid();
 
 		$json_message = json_encode($message);
-		try
-		{
+        error_log("rabbitMQClient::send_request payload: $json_message");
+        try
+        {
       $params = array();
       $params['host'] = $this->BROKER_HOST;
       $params['port'] = $this->BROKER_PORT;
       $params['login'] = $this->USER;
       $params['password'] = $this->PASSWORD;
       $params['vhost'] = $this->VHOST;
+      error_log("rabbitMQClient connecting with params: " . print_r($params, true));
 
-			$conn = new AMQPConnection($params);
-			$conn->connect();
+            $conn = new AMQPConnection($params);
+            $conn->connect();
 
-			$channel = new AMQPChannel($conn);
+            $channel = new AMQPChannel($conn);
 
 			$exchange = new AMQPExchange($channel);
       $exchange->setName($this->exchange);
@@ -243,6 +245,7 @@ class rabbitMQClient
 	function publish($message)
 	{
 		$json_message = json_encode($message);
+		error_log("rabbitMQClient::publish payload: $json_message");
 		try
 		{
       $params = array();
@@ -251,6 +254,7 @@ class rabbitMQClient
       $params['login'] = $this->USER;
       $params['password'] = $this->PASSWORD;
       $params['vhost'] = $this->VHOST;
+			error_log("rabbitMQClient publish connecting with params: " . print_r($params, true));
 			$conn = new AMQPConnection($params);
 			$conn->connect();
 			$channel = new AMQPChannel($conn);

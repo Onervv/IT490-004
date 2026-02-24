@@ -14,6 +14,7 @@ function doLogin($username,$password)
 
 function requestProcessor($request)
 {
+  error_log("testRabbitMQServer requestProcessor received: " . json_encode($request));
   echo "received request".PHP_EOL;
   var_dump($request);
   if(!isset($request['type']))
