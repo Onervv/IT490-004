@@ -6,12 +6,31 @@ require_once('rabbitMQLib.inc');
 
 function doLogin($request)
 {
-    //var_dump($request);
     $username = $request['username'];
     $password = $request['password'];
-    
+
     var_dump($username);
     var_dump($password);
+
+    $dbrequest = array();
+    $dbrequest['type'] = $request['type'];
+    $dbrequest['username'] = $username;
+    $dbrequest['password'] = $password;
+
+    //if(isset($client)){
+    //$response = $client->send_request($dbrequest);
+    //echo "sending request to listener".PHP_EOL;
+    //return $response;
+    //}
+
+    //$query = "INSERT INTO users"
+    //$mydb = 0;
+    //if(isset($mydb))
+    //{
+    //$stmt = $mydb->prepare("INSERT INTO users(username, password_hash) VALUES(?, ?)");
+    //$stmt->bind_param("ss", $username, $password);
+    //$stmt->execute();
+    //}
 
     // lookup username in databas
     // check password
@@ -23,7 +42,6 @@ function doLogin($request)
 function requestProcessor($request)
 {
   echo "received request".PHP_EOL;
-  var_dump($request);
   if(!isset($request['type']))
   {
     return "ERROR: unsupported message type";
@@ -31,21 +49,27 @@ function requestProcessor($request)
   switch ($request['type'])
   {
     case "login":
-      return doLogin($request['username'],$request['password']);
       echo "doing login stuff".PHP_EOL;
+      return doLogin($request);
     case "validate_session":
-      return doValidate($request['sessionId']);
       echo "Validate some stuff".PHP_EOL;
+      return doValidate($request['sessionId']);
   }
   return array("returnCode" => '0', 'message'=>"Server received request and processed");
 }
 
 $server = new rabbitMQServer("testRabbitMQ.ini","testServer2");
 
+//$mydb = new mysqli('100.116.117.114:3306', 'backendvm','backend123!','IT490');
+
 echo "testRabbitMQServer BEGIN".PHP_EOL;
-//$server->process_requests('requestProcessor');
-$server->process_requests('doLogin');
+
+//$client = new rabbitMQClient("testRabbitMQ.ini","testServer3");
+
+$server->process_requests('requestProcessor');
+
 echo "testRabbitMQServer END".PHP_EOL;
 exit();
 ?>
+
 
