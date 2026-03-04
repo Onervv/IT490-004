@@ -26,7 +26,7 @@ include __DIR__ . '/../includes/header.php';
             <p><!-- placeholder: intro text about your app --></p>
             <div class="btn-group mt-3" role="group">
                 <a href="login_page.php" class="btn btn-primary">Go to Login</a>
-                <a href="register.php" class="btn btn-success">Register</a>
+                <a href="register_page.php" class="btn btn-success">Register</a>
             </div>
         </div>
     </main>

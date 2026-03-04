@@ -26,7 +26,7 @@
     <!-- custom styles are defined in assets/css/bootstrap.css -->
     <nav class="navbar navbar-expand-lg navbar-light bg-primary-green">
         <div class="container">
-            <a class="navbar-brand" href="home.php">MyApp</a>
+            <a class="navbar-brand" href="home.php">AppName</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -47,7 +47,7 @@
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="getStartedDropdown">
                             <li><a class="dropdown-item" href="login_page.php">Login</a></li>
-                            <li><a class="dropdown-item" href="register.php">Register</a></li>
+                            <li><a class="dropdown-item" href="register_page.php">Register</a></li>
                         </ul>
                     </li>
                 </ul>

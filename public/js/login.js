@@ -3,7 +3,25 @@
 // Define the Response Handler
 function handleLoginResponse(parsedData) {
     const responseDiv = document.getElementById("textResponse");
-    responseDiv.innerHTML = `<div class="alert alert-success">Response: ${parsedData}</div>`;
+    
+    if (parsedData.status === 'ok' || parsedData.status === 'success') {
+        responseDiv.innerHTML = `
+            <div class="alert alert-success">
+                <strong>Login Successful!</strong><br>
+                Welcome! Redirecting you in 2 seconds...
+            </div>
+        `;
+        setTimeout(() => {
+            window.location.href = 'home.php';
+        }, 2000);
+    } else {
+        responseDiv.innerHTML = `
+            <div class="alert alert-danger">
+                <strong>Login Failed:</strong><br>
+                ${parsedData.message || 'Unknown error'}
+            </div>
+        `;
+    }
 }
 
 // Modern Fetch API Request (login-specific)
@@ -17,8 +35,10 @@ function sendLoginRequest(username, password) {
     });
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    const timeout = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
+    console.debug("About to fetch login.php", { method: "POST", bodySize: data.toString().length });
+    
     fetch("login.php", {
         method: "POST",
         body: data,
@@ -26,10 +46,26 @@ function sendLoginRequest(username, password) {
     })
         .then(async response => {
             clearTimeout(timeout);
-            const text = await response.text();
+            console.debug("fetch() completed, response status:", response.status);
+            console.debug("response headers:", {
+                'content-type': response.headers.get('content-type'),
+                'content-length': response.headers.get('content-length')
+            });
+            
+            let text;
+            try {
+                text = await response.text();
+                console.debug("response.text() succeeded, length:", text.length);
+            } catch (e) {
+                console.error("response.text() failed:", e);
+                throw new Error(`Failed to read response body: ${e.message}`);
+            }
+            
+            console.debug("login.php raw response (first 200 chars):", text.substring(0, 200));
+            
             if (!response.ok) {
                 // include server body in error message for debugging
-                throw new Error(`HTTP ${response.status} - ${text || '<empty>'}`);
+                throw new Error(`HTTP ${response.status} - ${text || '<empty response>'}`);
             }
             if (!text || text.trim().length === 0) {
                 throw new Error('Received empty response from server');
@@ -38,7 +74,7 @@ function sendLoginRequest(username, password) {
             try {
                 return JSON.parse(text);
             } catch (e) {
-                throw new Error(`Invalid JSON from server: ${e.message} (body: ${text})`);
+                throw new Error(`Invalid JSON from server: ${e.message} (body: ${text.substring(0, 100)})`);
             }
         })
         .then(parsedData => {

@@ -1,12 +1,28 @@
 <?php
+// Start output buffering to catch any accidental output
+ob_start();
+set_error_handler(function($errno, $errstr, $errfile, $errline) {
+    error_log("PHP Error [$errno]: $errstr in $errfile on line $errline");
+});
+
+// always return JSON
+header('Content-Type: application/json');
+
+// Check if AMQP extension is installed before proceeding
+if (!extension_loaded('amqp')) {
+    http_response_code(500);
+    echo json_encode(['status'=>'error','message'=>'AMQP extension not installed','detail'=>'The PHP AMQP extension is required but not loaded']);
+    exit(0);
+}
+
 // Includes the template's RabbitMQ libraries
 // includes now live in ../includes
 require_once __DIR__ . '/../includes/path.inc';
 require_once __DIR__ . '/../includes/get_host_info.inc';
 require_once __DIR__ . '/../includes/rabbitMQLib.inc';
 
-// always return JSON
-header('Content-Type: application/json');
+// Clear any buffered output
+ob_clean();
 
 //  Catch the POST request from your main.js fetch() call
 if (!isset($_POST) || empty($_POST)) {
@@ -57,7 +73,10 @@ error_log("login.php prepared request for section $rabbitSection: " . json_encod
 
 try {
     // perform RPC and capture whatever the server returns
+    error_log("login.php about to call send_request");
     $response = $client->send_request($request);
+    error_log("login.php send_request returned successfully");
+    
     // log the raw response for debugging
     error_log("login.php received response: " . json_encode($response));
 
@@ -65,7 +84,10 @@ try {
     // keep logs outside the web root
     $logfile = __DIR__ . '/../logs/rabbit_responses.log';
     $entry = date('c') . ' ' . json_encode($response);
+    error_log("login.php appending to logfile: $logfile");
     file_put_contents($logfile, $entry . PHP_EOL, FILE_APPEND);
+    error_log("login.php wrote to logfile");
+    
     // trim file if it has grown too large
     $lines = file($logfile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     if (count($lines) > 50) {
@@ -73,7 +95,19 @@ try {
         file_put_contents($logfile, implode(PHP_EOL, $keep) . PHP_EOL);
     }
 
-    echo json_encode($response);
+    error_log("login.php about to json_encode response");
+    $json_response = json_encode($response);
+    error_log("login.php json_encode returned: " . substr($json_response, 0, 100));
+    
+    if ($json_response === false) {
+        error_log("login.php json_encode failed!");
+        http_response_code(500);
+        echo json_encode(['status'=>'error','message'=>'json_encode failed','detail'=>json_last_error_msg()]);
+    } else {
+        error_log("login.php echoing response");
+        echo $json_response;
+        error_log("login.php echo completed");
+    }
 } catch (Throwable $e) {
     // catch Error as well as Exception
     error_log("login.php RPC failed: " . $e->getMessage());
