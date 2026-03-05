@@ -19,11 +19,10 @@ else
 }
 
 $request = array();
-$request['type'] = "Login";
+$request['type'] = "login";
 $request['username'] = "steve";
 $request['password'] = "password";
 $request['message'] = $msg;
-error_log("rpc/loginRequest sending: " . json_encode($request));
 // by default we publish and do not wait for reply; send request is for waiting for a reply  
 $response = $client->send_request($request);
 // $response = $client->publish($request);

@@ -14,7 +14,6 @@ function getDBConnection()
   
   $conn = new mysqli($host, $user, $pass, $db);
   if ($conn->connect_error) {
-    error_log("Database connection failed: " . $conn->connect_error);
     return null;
   }
   return $conn;
@@ -22,8 +21,6 @@ function getDBConnection()
 
 function doLogin($username, $password)
 {
-  error_log("doLogin called with user={$username}");
-
   if (empty($username) || empty($password)) {
     return array('status' => 'error', 'message' => 'username or password empty');
   }
@@ -35,13 +32,11 @@ function doLogin($username, $password)
 
   $stmt = $db->prepare('SELECT userid, password_hash FROM users WHERE username = ? LIMIT 1');
   if (!$stmt) {
-    error_log("doLogin prepare failed: " . $db->error);
     return array('status' => 'error', 'message' => 'database error');
   }
 
   $stmt->bind_param('s', $username);
   if (!$stmt->execute()) {
-    error_log("doLogin execute failed: " . $stmt->error);
     return array('status' => 'error', 'message' => 'database error');
   }
 
@@ -51,11 +46,32 @@ function doLogin($username, $password)
   }
 
   $row = $result->fetch_assoc();
-  if (password_verify($password, $row['password_hash'])) {
-    return array('status' => 'ok', 'user_id' => $row['userid']);
+  if (!password_verify($password, $row['password_hash'])) {
+    return array('status' => 'error', 'message' => 'invalid credentials');
   }
 
-  return array('status' => 'error', 'message' => 'invalid credentials');
+  // Generate session key and store in database
+  $sessionKey = bin2hex(random_bytes(32));
+  $sessionKeyHash = hash('sha256', $sessionKey);
+  $userId = $row['userid'];
+  $expiresAt = date('Y-m-d H:i:s', strtotime('+24 hours'));
+
+  // Delete any existing sessions for this user
+  $deleteStmt = $db->prepare('DELETE FROM sessions WHERE userid = ?');
+  $deleteStmt->bind_param('i', $userId);
+  $deleteStmt->execute();
+
+  // Insert new session
+  $insertStmt = $db->prepare('INSERT INTO sessions (userid, sessionkey_hash, expires_at) VALUES (?, ?, ?)');
+  if (!$insertStmt) {
+    return array('status' => 'error', 'message' => 'database error');
+  }
+  $insertStmt->bind_param('iss', $userId, $sessionKeyHash, $expiresAt);
+  if (!$insertStmt->execute()) {
+    return array('status' => 'error', 'message' => 'failed to create session');
+  }
+
+  return array('status' => 'ok', 'user_id' => $userId, 'session_key' => $sessionKey, 'username' => $username);
 }
 
 /**
@@ -65,8 +81,6 @@ function doLogin($username, $password)
  */
 function doRegister($username, $password)
 {
-  error_log("doRegister called with user={$username}");
-  
   $db = getDBConnection();
   
   if (!$db || $username == "" || $password == "") {
@@ -87,33 +101,96 @@ function doRegister($username, $password)
   return $stmt->execute() ? array("status" => "ok") : array("status" => "fail", "message" => "Database error");
 }
 
+/**
+ * Validate a session key.
+ * Returns array with status 'ok' and user info if valid, or 'error' if invalid/expired.
+ */
+function doValidate($sessionKey)
+{
+  if (empty($sessionKey)) {
+    return array('status' => 'error', 'message' => 'no session key provided');
+  }
+
+  $db = getDBConnection();
+  if (!$db) {
+    return array('status' => 'error', 'message' => 'database connection failed');
+  }
+
+  $sessionKeyHash = hash('sha256', $sessionKey);
+
+  $stmt = $db->prepare('SELECT s.userid, s.expires_at, u.username FROM sessions s JOIN users u ON s.userid = u.userid WHERE s.sessionkey_hash = ? LIMIT 1');
+  if (!$stmt) {
+    return array('status' => 'error', 'message' => 'database error');
+  }
+
+  $stmt->bind_param('s', $sessionKeyHash);
+  if (!$stmt->execute()) {
+    return array('status' => 'error', 'message' => 'database error');
+  }
+
+  $result = $stmt->get_result();
+  if ($result->num_rows === 0) {
+    return array('status' => 'error', 'message' => 'invalid session');
+  }
+
+  $row = $result->fetch_assoc();
+  
+  // Check if session has expired
+  if (strtotime($row['expires_at']) < time()) {
+    // Delete expired session
+    $deleteStmt = $db->prepare('DELETE FROM sessions WHERE sessionkey_hash = ?');
+    $deleteStmt->bind_param('s', $sessionKeyHash);
+    $deleteStmt->execute();
+    return array('status' => 'error', 'message' => 'session expired');
+  }
+
+  return array('status' => 'ok', 'user_id' => $row['userid'], 'username' => $row['username']);
+}
+
+/**
+ * Invalidate a session (logout).
+ */
+function doLogout($sessionKey)
+{
+  if (empty($sessionKey)) {
+    return array('status' => 'error', 'message' => 'no session key provided');
+  }
+
+  $db = getDBConnection();
+  if (!$db) {
+    return array('status' => 'error', 'message' => 'database connection failed');
+  }
+
+  $sessionKeyHash = hash('sha256', $sessionKey);
+  $stmt = $db->prepare('DELETE FROM sessions WHERE sessionkey_hash = ?');
+  if (!$stmt) {
+    return array('status' => 'error', 'message' => 'database error');
+  }
+
+  $stmt->bind_param('s', $sessionKeyHash);
+  $stmt->execute();
+
+  return array('status' => 'ok', 'message' => 'logged out');
+}
+
 function requestProcessor($request)
 {
-  error_log("testRabbitMQServer requestProcessor received: " . json_encode($request));
-  echo "received request".PHP_EOL;
-  var_dump($request);
-  
   if(!isset($request['type']))
   {
-    error_log("ERROR: request missing 'type' field. Keys: " . implode(',', array_keys($request)));
     return "ERROR: unsupported message type";
   }
-  
-  error_log("Processing request type: " . $request['type']);
   
   switch ($request['type'])
   {
     case "login":
-      error_log("Routing to doLogin");
       return doLogin($request['username'],$request['password']);
     case "register":
-      error_log("Routing to doRegister");
       return doRegister($request['username'],$request['password']);
     case "validate_session":
-      error_log("Routing to doValidate");
-      return doValidate($request['sessionId']);
+      return doValidate($request['session_key']);
+    case "logout":
+      return doLogout($request['session_key']);
     default:
-      error_log("Unknown request type: " . $request['type']);
       return array("returnCode" => '0', 'message'=>"Server received request and processed");
   }
 }

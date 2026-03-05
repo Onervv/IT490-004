@@ -1,6 +1,5 @@
 // register.js - handle registration form submission
 
-// Define the Response Handler
 function handleRegisterResponse(parsedData) {
     const responseDiv = document.getElementById("registerResponse");
     
@@ -11,7 +10,6 @@ function handleRegisterResponse(parsedData) {
                 Your account has been created. You can now <a href="login_page.php">login here</a>.
             </div>
         `;
-        // Clear form
         document.getElementById('registerForm').reset();
     } else {
         responseDiv.innerHTML = `
@@ -23,10 +21,7 @@ function handleRegisterResponse(parsedData) {
     }
 }
 
-// Modern Fetch API Request (register-specific)
 function sendRegisterRequest(username, password) {
-    console.debug("sendRegisterRequest() called", { username, password: '***' });
-
     const data = new URLSearchParams({
         "type": "register",
         "uname": username,
@@ -34,9 +29,7 @@ function sendRegisterRequest(username, password) {
     });
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-
-    console.debug("About to fetch register.php", { method: "POST", bodySize: data.toString().length });
+    const timeout = setTimeout(() => controller.abort(), 30000);
     
     fetch("register.php", {
         method: "POST",
@@ -45,48 +38,29 @@ function sendRegisterRequest(username, password) {
     })
         .then(async response => {
             clearTimeout(timeout);
-            console.debug("fetch() completed, response status:", response.status);
-            console.debug("response headers:", {
-                'content-type': response.headers.get('content-type'),
-                'content-length': response.headers.get('content-length')
-            });
-            
-            let text;
-            try {
-                text = await response.text();
-                console.debug("response.text() succeeded, length:", text.length);
-            } catch (e) {
-                console.error("response.text() failed:", e);
-                throw new Error(`Failed to read response body: ${e.message}`);
-            }
-            
-            console.debug("register.php raw response (first 200 chars):", text.substring(0, 200));
+            const text = await response.text();
             
             if (!response.ok) {
-                // include server body in error message for debugging
                 throw new Error(`HTTP ${response.status} - ${text || '<empty response>'}`);
             }
             if (!text || text.trim().length === 0) {
                 throw new Error('Received empty response from server');
             }
-            // attempt to parse JSON and provide a clearer error message
             try {
                 return JSON.parse(text);
             } catch (e) {
-                throw new Error(`Invalid JSON from server: ${e.message} (body: ${text.substring(0, 100)})`);
+                throw new Error(`Invalid JSON from server: ${e.message}`);
             }
         })
         .then(parsedData => {
-            console.debug("register response received", parsedData);
             handleRegisterResponse(parsedData);
         })
         .catch(error => {
             clearTimeout(timeout);
-            console.error("register request failed", error);
             const responseDiv = document.getElementById("registerResponse");
             let message = error.message;
             if (error.name === 'AbortError') {
-                message = 'Request timed out after 30 seconds - worker may not be running or broker is unreachable';
+                message = 'Request timed out - server may be unreachable';
             }
             responseDiv.innerHTML = `<div class="alert alert-danger">Request Failed: ${message}</div>`;
         });

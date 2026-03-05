@@ -18,9 +18,6 @@ $request = array();
 $request['type'] = "register";
 $request['username'] = $username;
 $request['password'] = $password;
-$request['message'] = "Register request from RPC CLI";
-
-error_log("rpc/registerRequest sending: " . json_encode($request));
 
 // send_request waits for a reply from the worker
 $response = $client->send_request($request);

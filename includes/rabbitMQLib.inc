@@ -45,7 +45,7 @@ class rabbitMQServer
 			try {
 				$this->conn->disconnect();
 			} catch (Exception $e) {
-				error_log("rabbitMQServer: Error disconnecting: " . $e->getMessage());
+				// Connection cleanup failed silently
 			}
 		}
 	}
@@ -60,7 +60,6 @@ class rabbitMQServer
 			$params['login'] = $this->USER;
 			$params['password'] = $this->PASSWORD;
 			$params['vhost'] = $this->VHOST;
-			error_log("rabbitMQServer ensureConnection creating new connection");
 			$this->conn = new AMQPConnection($params);
 			$this->conn->connect();
 			$this->channel = new AMQPChannel($this->conn);
@@ -195,7 +194,7 @@ class rabbitMQClient
 			try {
 				$this->conn->disconnect();
 			} catch (Exception $e) {
-				error_log("rabbitMQClient: Error disconnecting: " . $e->getMessage());
+				// Connection cleanup failed silently
 			}
 		}
 	}
@@ -210,7 +209,6 @@ class rabbitMQClient
 			$params['login'] = $this->USER;
 			$params['password'] = $this->PASSWORD;
 			$params['vhost'] = $this->VHOST;
-			error_log("rabbitMQClient ensureConnection creating new connection");
 			$this->conn = new AMQPConnection($params);
 			$this->conn->connect();
 			$this->channel = new AMQPChannel($this->conn);
@@ -241,7 +239,6 @@ class rabbitMQClient
 		$uid = uniqid();
 
 		$json_message = json_encode($message);
-        error_log("rabbitMQClient::send_request payload: $json_message");
         try
         {
         	// Ensure we have a valid connection
@@ -285,7 +282,6 @@ class rabbitMQClient
 	function publish($message)
 	{
 		$json_message = json_encode($message);
-		error_log("rabbitMQClient::publish payload: $json_message");
 		try
 		{
         	// Ensure we have a valid connection

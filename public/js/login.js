@@ -1,19 +1,24 @@
 // login.js - handle login-related frontend actions
 
-// Define the Response Handler
 function handleLoginResponse(parsedData) {
     const responseDiv = document.getElementById("textResponse");
     
     if (parsedData.status === 'ok' || parsedData.status === 'success') {
+        // Store the session key in sessionStorage
+        if (parsedData.session_key) {
+            sessionStorage.setItem('session_key', parsedData.session_key);
+            sessionStorage.setItem('username', parsedData.username || '');
+        }
+        
         responseDiv.innerHTML = `
             <div class="alert alert-success">
                 <strong>Login Successful!</strong><br>
-                Welcome! Redirecting you in 2 seconds...
+                Welcome! Redirecting...
             </div>
         `;
         setTimeout(() => {
-            window.location.href = 'home.php';
-        }, 2000);
+            window.location.href = 'dashboard.php';
+        }, 1000);
     } else {
         responseDiv.innerHTML = `
             <div class="alert alert-danger">
@@ -24,10 +29,7 @@ function handleLoginResponse(parsedData) {
     }
 }
 
-// Modern Fetch API Request (login-specific)
 function sendLoginRequest(username, password) {
-    console.debug("sendLoginRequest() called", { username, password });
-
     const data = new URLSearchParams({
         "type": "login",
         "uname": username,
@@ -35,9 +37,7 @@ function sendLoginRequest(username, password) {
     });
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-
-    console.debug("About to fetch login.php", { method: "POST", bodySize: data.toString().length });
+    const timeout = setTimeout(() => controller.abort(), 30000);
     
     fetch("login.php", {
         method: "POST",
@@ -46,48 +46,29 @@ function sendLoginRequest(username, password) {
     })
         .then(async response => {
             clearTimeout(timeout);
-            console.debug("fetch() completed, response status:", response.status);
-            console.debug("response headers:", {
-                'content-type': response.headers.get('content-type'),
-                'content-length': response.headers.get('content-length')
-            });
-            
-            let text;
-            try {
-                text = await response.text();
-                console.debug("response.text() succeeded, length:", text.length);
-            } catch (e) {
-                console.error("response.text() failed:", e);
-                throw new Error(`Failed to read response body: ${e.message}`);
-            }
-            
-            console.debug("login.php raw response (first 200 chars):", text.substring(0, 200));
+            const text = await response.text();
             
             if (!response.ok) {
-                // include server body in error message for debugging
                 throw new Error(`HTTP ${response.status} - ${text || '<empty response>'}`);
             }
             if (!text || text.trim().length === 0) {
                 throw new Error('Received empty response from server');
             }
-            // attempt to parse JSON and provide a clearer error message
             try {
                 return JSON.parse(text);
             } catch (e) {
-                throw new Error(`Invalid JSON from server: ${e.message} (body: ${text.substring(0, 100)})`);
+                throw new Error(`Invalid JSON from server: ${e.message}`);
             }
         })
         .then(parsedData => {
-            console.debug("login response received", parsedData);
             handleLoginResponse(parsedData);
         })
         .catch(error => {
             clearTimeout(timeout);
-            console.error("login request failed", error);
             const responseDiv = document.getElementById("textResponse");
             let message = error.message;
             if (error.name === 'AbortError') {
-                message = 'Request timed out after 10 seconds - server may be unreachable';
+                message = 'Request timed out - server may be unreachable';
             }
             responseDiv.innerHTML = `<div class="alert alert-danger">Request Failed: ${message}</div>`;
         });
