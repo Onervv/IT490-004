@@ -83,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             document.getElementById('dashboard').style.display = 'block';
             document.getElementById('usernameDisplay').textContent = username || 'User';
             
-            /* TODO: Re-enable when Diego fixes validate_session
+            //TODO: Re-enable validate_session is fixed
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 10000);
             
@@ -116,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 sessionStorage.removeItem('username');
                 window.location.href = 'login_page.php';
             });
-            */
+            
             
             // Logout handler
             document.getElementById('logoutBtn').addEventListener('click', function(e) {
