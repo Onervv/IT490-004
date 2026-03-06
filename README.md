@@ -7,8 +7,6 @@ browser, forwarded by PHP to a broker, and consumed by a worker script.
 
 ### Project structure
 
-The repository is now organised into clean, purpose‑based directories:
-
 - `public/` – web‑facing document root (set as Apache's `DocumentRoot`).
   Contains:
   - `home.php` – gateway/landing page (uses the shared header include; `index.php` now redirects here)
@@ -90,14 +88,58 @@ In**.  The message will be forwarded to RabbitMQ.
    php rpc/loginRequest.php           # rpc scripts still in rpc/
    ```
 
+### Session & Validation Flow
+
+#### 1. Login Flow
+`login.js` → `login.php` → RabbitMQ → remote server
+
+1. User enters credentials on `login_page.php`
+2. `login.js` sends POST to `login.php` with `{type: "login", uname, pword}`
+3. `login.php` forwards request via RabbitMQ to remote server (`testServer2`)
+4. Remote server's `doLogin()`:
+   - Validates credentials against DB
+   - Creates session: `INSERT INTO sessions(userid, sessionkey_hash, expires_at)`
+   - Returns `{status: "ok", session_key: "...", username: "..."}`
+5. `login.js` stores in browser via `sessionStorage`
+6. Redirects to `dashboard.php`
+
+#### 2. Dashboard Validation
+`dashboard.php` → RabbitMQ → remote server
+
+1. Page loads, JS checks `sessionStorage.getItem('session_key')`
+2. If no key → redirect to login
+3. If key exists → POST to `dashboard.php` with `{action: "validate", session_key: "..."}`
+4. PHP handler sends via RabbitMQ: `{type: "validate_session", session_key: "..."}`
+5. Remote server's `doValidate()`:
+   - Hashes the session key: `hash("sha256", $sessionId)`
+   - Queries: `SELECT 1 FROM sessions WHERE sessionkey_hash=? AND expires_at > now()`
+   - Returns `{status: "ok"}` or `{status: "fail"}`
+6. Dashboard JS:
+   - `status: "ok"` → hide spinner, show dashboard
+   - Any failure → clear sessionStorage, redirect to login
+
+#### 3. Logout
+Currently client-side only: clears `sessionStorage` and redirects to login.
+Session remains in DB until expiry (2 hours).
+
+#### Status
+- Login creates session in DB
+- Session key stored in browser
+- Dashboard validates session via backend
+- Invalid/expired sessions redirect to login
+
+#### TODO (optional)
+- Return `username` from `doValidate()` on remote server
+- Add `logout` handler on remote server to delete session immediately
+- Add CSRF protection for POST endpoints
+
 ### Notes
 
-* Messages themselves are plain JSON; the broker only sees the serialized
-  payload.  Authentication uses the credentials in the `.ini` file, not the
+* Messages are plain JSON; the broker only sees the serialized payload.
+  Authentication uses the credentials in the `.ini` file, not the
   `username`/`password` fields in the JSON.
-* You can rename or reorganise the JS/PHP files as you like – just update the
+* You can rename or reorganise the JS/PHP files as needed – update the
   HTML and `require_once()` calls accordingly.
-* The `js/login.js` file contains console debug statements to make front‑end
-  behaviour easier to follow.
+* `js/login.js` contains console debug statements for easier front-end debugging.
 
 

@@ -72,43 +72,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             const sessionKey = sessionStorage.getItem('session_key');
             const username = sessionStorage.getItem('username');
             
-            // Always show dashboard for debugging - no redirects
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('dashboard').style.display = 'block';
-            
             if (!sessionKey) {
-                document.getElementById('usernameDisplay').textContent = 'Guest (no session)';
-                console.warn('No session_key in sessionStorage');
-            } else {
-                document.getElementById('usernameDisplay').textContent = username || 'User';
-                
-                // Optional: validate session in background
-                const controller = new AbortController();
-                const timeout = setTimeout(() => controller.abort(), 10000);
-                
-                const data = new URLSearchParams({
-                    action: 'validate',
-                    session_key: sessionKey
-                });
-                
-                fetch('dashboard.php', {
-                    method: 'POST',
-                    body: data,
-                    signal: controller.signal
-                })
-                .then(response => response.json())
-                .then(result => {
-                    clearTimeout(timeout);
-                    console.log('Validation response:', result);
-                    if (result.status === 'ok') {
-                        document.getElementById('usernameDisplay').textContent = result.username || username || 'User';
-                    }
-                })
-                .catch((err) => {
-                    clearTimeout(timeout);
-                    console.warn('Session validation failed:', err.message || 'unknown error');
-                });
+                window.location.href = 'login_page.php';
+                return;
             }
+            
+            // Validate session with backend
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 10000);
+            
+            const data = new URLSearchParams({
+                action: 'validate',
+                session_key: sessionKey
+            });
+            
+            fetch('dashboard.php', {
+                method: 'POST',
+                body: data,
+                signal: controller.signal
+            })
+            .then(response => response.json())
+            .then(result => {
+                clearTimeout(timeout);
+                if (result.status === 'ok') {
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('dashboard').style.display = 'block';
+                    document.getElementById('usernameDisplay').textContent = result.username || username || 'User';
+                } else {
+                    sessionStorage.removeItem('session_key');
+                    sessionStorage.removeItem('username');
+                    window.location.href = 'login_page.php';
+                }
+            })
+            .catch((err) => {
+                clearTimeout(timeout);
+                sessionStorage.removeItem('session_key');
+                sessionStorage.removeItem('username');
+                window.location.href = 'login_page.php';
+            });
             
             // Logout handler
             document.getElementById('logoutBtn').addEventListener('click', function(e) {
