@@ -6,19 +6,18 @@ include __DIR__ . '/../includes/header.php';
 
 <body class="d-flex flex-column min-vh-100">
     <main class="flex-grow-1">
-        <!-- TODO: update this to show the correct landing page content -->
+        <!-- TODO: update this to show landing page content -->
         <section id="features" class="py-5">
             <div class="container">
-                <h2>Features</h2>
-                <p>Describe application's key features here.</p>
+                
+
             </div>
         </section>
 
-        <!-- about section -->
+        <!-- section -->
         <section id="about" class="py-5 bg-light">
             <div class="container">
-                <h2>About Us</h2>
-                <p>Random filler information about the app when we come up with an idea.</p>
+                
             </div>
         </section>
 

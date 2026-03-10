@@ -13,7 +13,7 @@
     <!-- Dashboard Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light bg-primary-green">
         <div class="container">
-            <a class="navbar-brand" href="dashboard_page.php">AppName</a>
+            <a class="navbar-brand" href="dashboard_page.php">M3USIC</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#dashboardNav" aria-controls="dashboardNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
