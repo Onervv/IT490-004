@@ -17,7 +17,7 @@ function handleLoginResponse(parsedData) {
             </div>
         `;
         setTimeout(() => {
-            window.location.href = 'dashboard.php';
+            window.location.href = 'dashboard_page.php';
         }, 1000);
     } else {
         responseDiv.innerHTML = `

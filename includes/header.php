@@ -17,7 +17,7 @@
     <!-- local copy already includes the brite theme -->
     <link rel="stylesheet" href="assets/css/bootstrap.css">
 
-    <!-- optional: if you need to pull from CDN instead, uncomment this -->
+    <!-- optional: to pull from CDN instead, uncomment this -->
     <!--
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.8/dist/brite/bootstrap.min.css" crossorigin="anonymous">
     -->
@@ -26,20 +26,20 @@
     <!-- custom styles are defined in assets/css/bootstrap.css -->
     <nav class="navbar navbar-expand-lg navbar-light bg-primary-green">
         <div class="container">
-            <a class="navbar-brand" href="home.php">AppName</a>
+            <a class="navbar-brand" href="home_page.php">M3USIC</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="mainNav">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link" href="home.php">Home</a>
+                        <a class="nav-link" href="home_page.php">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#features">Features</a>
+                        <a class="nav-link" href="features_page.php">Features</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#about">About</a>
+                        <a class="nav-link" href="about_page.php">About</a>
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="getStartedDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
