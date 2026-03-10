@@ -1,4 +1,4 @@
 <?php
 // simple redirect to home page
-header('Location: home.php');
+header('Location: home_page.php');
 exit();

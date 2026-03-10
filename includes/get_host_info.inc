@@ -8,8 +8,24 @@
 */
 function getHostInfo(array $extra = NULL)
 {
-    $machine;
-    $machine = parse_ini_file("host.ini",$process_sections=true);
+    $machine = array();
+    
+    // Try to load host.ini - first from current directory, then from include directory
+    $host_ini_paths = [
+        "host.ini",
+        __DIR__ . "/../config/host.ini"
+    ];
+    
+    foreach ($host_ini_paths as $path) {
+        if (file_exists($path)) {
+            $parsed = parse_ini_file($path, true);
+            if ($parsed !== false) {
+                $machine = array_merge($machine, $parsed);
+                break;
+            }
+        }
+    }
+    
     if ($extra != NULL)
     {
         foreach ($extra as $ini)

@@ -6,29 +6,24 @@ require_once __DIR__ . '/../includes/rabbitMQLib.inc';
 
 
 // choose section via first argument or default to remote broker
-$rabbitSection = isset($argv[2]) ? $argv[2] : "testServer2";
+$rabbitSection = isset($argv[3]) ? $argv[3] : "testServer2";
 // config relocated
 $client = new rabbitMQClient(__DIR__ . '/../config/testRabbitMQ.ini', $rabbitSection);
-if (isset($argv[1]))
-{
-  $msg = $argv[1];
-}
-else
-{
-  $msg = "test message";
-}
+
+// Get username and password from arguments
+$username = isset($argv[1]) ? $argv[1] : "testuser";
+$password = isset($argv[2]) ? $argv[2] : "testpass123";
 
 $request = array();
-$request['type'] = "login";
-$request['username'] = "steve";
-$request['password'] = "password";
-$request['message'] = $msg;
-// by default we publish and do not wait for reply; send request is for waiting for a reply  
+$request['type'] = "register";
+$request['username'] = $username;
+$request['password'] = $password;
+
+// send_request waits for a reply from the worker
 $response = $client->send_request($request);
-// $response = $client->publish($request);
 
 if (isset($response)) {
-    echo json_encode(array('status'=>'sent','response'=>$response));
+    echo json_encode(array('status'=>'sent','response'=>$response), JSON_PRETTY_PRINT);
 } else {
     echo json_encode(array('status'=>'failed'));
 }

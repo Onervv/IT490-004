@@ -1,15 +1,35 @@
 // login.js - handle login-related frontend actions
 
-// Define the Response Handler
 function handleLoginResponse(parsedData) {
     const responseDiv = document.getElementById("textResponse");
-    responseDiv.innerHTML = `<div class="alert alert-success">Response: ${parsedData}</div>`;
+    
+    if (parsedData.status === 'ok' || parsedData.status === 'success') {
+        // Store the session key in sessionStorage
+        if (parsedData.session_key) {
+            sessionStorage.setItem('session_key', parsedData.session_key);
+            sessionStorage.setItem('username', parsedData.username || '');
+        }
+        
+        responseDiv.innerHTML = `
+            <div class="alert alert-success">
+                <strong>Login Successful!</strong><br>
+                Welcome! Redirecting...
+            </div>
+        `;
+        setTimeout(() => {
+            window.location.href = 'dashboard_page.php';
+        }, 1000);
+    } else {
+        responseDiv.innerHTML = `
+            <div class="alert alert-danger">
+                <strong>Login Failed:</strong><br>
+                ${parsedData.message || 'Unknown error'}
+            </div>
+        `;
+    }
 }
 
-// Modern Fetch API Request (login-specific)
 function sendLoginRequest(username, password) {
-    console.debug("sendLoginRequest() called", { username, password });
-
     const data = new URLSearchParams({
         "type": "login",
         "uname": username,
@@ -17,8 +37,8 @@ function sendLoginRequest(username, password) {
     });
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-
+    const timeout = setTimeout(() => controller.abort(), 30000);
+    
     fetch("login.php", {
         method: "POST",
         body: data,
@@ -27,31 +47,28 @@ function sendLoginRequest(username, password) {
         .then(async response => {
             clearTimeout(timeout);
             const text = await response.text();
+            
             if (!response.ok) {
-                // include server body in error message for debugging
-                throw new Error(`HTTP ${response.status} - ${text || '<empty>'}`);
+                throw new Error(`HTTP ${response.status} - ${text || '<empty response>'}`);
             }
             if (!text || text.trim().length === 0) {
                 throw new Error('Received empty response from server');
             }
-            // attempt to parse JSON and provide a clearer error message
             try {
                 return JSON.parse(text);
             } catch (e) {
-                throw new Error(`Invalid JSON from server: ${e.message} (body: ${text})`);
+                throw new Error(`Invalid JSON from server: ${e.message}`);
             }
         })
         .then(parsedData => {
-            console.debug("login response received", parsedData);
             handleLoginResponse(parsedData);
         })
         .catch(error => {
             clearTimeout(timeout);
-            console.error("login request failed", error);
             const responseDiv = document.getElementById("textResponse");
             let message = error.message;
             if (error.name === 'AbortError') {
-                message = 'Request timed out after 10 seconds - server may be unreachable';
+                message = 'Request timed out - server may be unreachable';
             }
             responseDiv.innerHTML = `<div class="alert alert-danger">Request Failed: ${message}</div>`;
         });
