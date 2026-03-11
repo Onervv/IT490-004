@@ -6,6 +6,8 @@ require_once('rabbitMQLib.inc');
 
 $client = new rabbitMQClient("testRabbitMQ.ini","testServer2");
 
+$client2 = new rabbitMQClient("testRabbitMQ.ini","testServer3");
+
 if (isset($argv[1]))
 {
   $msg = $argv[1];
@@ -21,12 +23,16 @@ $request['username'] = "steve";
 $request['password'] = "password";
 $request['message'] = $msg;
 
-print_r($request);
+//print_r($request);
+
+$request['message'] = "api";
 
 $response = $client->send_request($request);
 
+print_r($response); 
+
 echo "client received response: ".PHP_EOL;
-print_r($response);
+//print_r($response);
 echo "\n\n";
 
 echo $argv[0]." END".PHP_EOL;

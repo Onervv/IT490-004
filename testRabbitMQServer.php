@@ -11,6 +11,7 @@ function doLogin($request)
 
     var_dump($username);
     var_dump($password);
+    var_dump($request['message']);
 
     $dbrequest = array();
     $dbrequest['type'] = $request['type'];
@@ -58,15 +59,16 @@ function requestProcessor($request)
   return array("returnCode" => '0', 'message'=>"Server received request and processed");
 }
 
+//$mydb = new mysqli('100.116.117.114:3306', 'backendvm','backend123!','IT490');
+
 $server = new rabbitMQServer("testRabbitMQ.ini","testServer2");
 
-//$mydb = new mysqli('100.116.117.114:3306', 'backendvm','backend123!','IT490');
+$Apiserver = new rabbitMQServer("testRabbitMQ.ini", "testServer3");
 
 echo "testRabbitMQServer BEGIN".PHP_EOL;
 
-//$client = new rabbitMQClient("testRabbitMQ.ini","testServer3");
-
 $server->process_requests('requestProcessor');
+$Apiserver->process_requests('requestProcessor');
 
 echo "testRabbitMQServer END".PHP_EOL;
 exit();

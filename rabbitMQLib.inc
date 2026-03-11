@@ -12,7 +12,7 @@ class rabbitMQServer
 	private $VHOST;
 	private $exchange;
 	private $queue;
-	private $routing_key = '*';
+	private $routing_key = "*";
 	private $exchange_type = "topic";
 	private $auto_delete = false;
 
@@ -144,7 +144,7 @@ class rabbitMQClient
 	private $VHOST;
 	private $exchange;
 	private $queue;
-	private $routing_key = '*';
+	private $routing_key = "*";
 	private $response_queue = array();
 	private $exchange_type = "topic";
 
@@ -220,7 +220,7 @@ class rabbitMQClient
 			$this->conn_queue->bind($exchange->getName(),$this->routing_key);
 
 			$exchange->publish($json_message,$this->routing_key,AMQP_NOPARAM,array('reply_to'=>$callback_queue->getName(),'correlation_id'=>$uid));
-      $this->response_queue[$uid] = "waiting";
+                        $this->response_queue[$uid] = "waiting";
 			$callback_queue->consume(array($this,'process_response'));
 
 			$response = $this->response_queue[$uid];
