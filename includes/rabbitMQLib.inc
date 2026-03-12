@@ -185,6 +185,7 @@ class rabbitMQClient
 		}
 		$this->exchange = $this->machine[$server]["EXCHANGE"];
 		$this->queue = $this->machine[$server]["QUEUE"];
+		$this->routing_key = $this->machine[$server]["ROUTING_KEY"];
 	}
 
 	function __destruct()
