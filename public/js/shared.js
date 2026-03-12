@@ -59,34 +59,6 @@ var M3 = (function () {
         return !!getLikedItems()[String(itemId)];
     }
 
-    /* ── Reviews (per-user, localStorage) ──────────────────────── */
-
-    function getReviewsKey() {
-        const username = sessionStorage.getItem('username') || '_anon';
-        return `artist_reviews_${username}`;
-    }
-
-    function getReviews() {
-        try {
-            return JSON.parse(localStorage.getItem(getReviewsKey())) || {};
-        } catch { return {}; }
-    }
-
-    function saveReview(artistId, text) {
-        const reviews = getReviews();
-        const key = String(artistId);
-        if (text.trim()) {
-            reviews[key] = { text: text.trim(), date: new Date().toLocaleDateString() };
-        } else {
-            delete reviews[key];
-        }
-        localStorage.setItem(getReviewsKey(), JSON.stringify(reviews));
-    }
-
-    function getReview(artistId) {
-        return getReviews()[String(artistId)] || null;
-    }
-
     /* ── Card HTML ──────────────────────────────────────────────── */
 
     // Dark-only palette so white text is always readable
@@ -153,6 +125,46 @@ var M3 = (function () {
 
     /* ── Public API ─────────────────────────────────────────────── */
 
+    /* ── Toast helper ───────────────────────────────────────────── */
+
+    /**
+     * Show a Bootstrap toast notification briefly.
+     * @param {string} message - HTML-safe message text
+     * @param {string} [bg='success'] - Bootstrap bg class suffix (success, danger, warning, info)
+     * @param {number} [delay=3000] - Auto-hide delay in ms
+     */
+    function showToast(message, bg, delay) {
+        bg    = bg    || 'success';
+        delay = delay || 3000;
+
+        // Ensure toast container exists
+        let container = document.getElementById('m3-toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'm3-toast-container';
+            container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+            container.style.zIndex = '1090';
+            document.body.appendChild(container);
+        }
+
+        const id = 'm3toast_' + Date.now();
+        const html =
+            '<div id="' + id + '" class="toast align-items-center text-bg-' + bg + ' border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="' + delay + '">' +
+                '<div class="d-flex">' +
+                    '<div class="toast-body">' + message + '</div>' +
+                    '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>' +
+                '</div>' +
+            '</div>';
+        container.insertAdjacentHTML('beforeend', html);
+
+        const el = document.getElementById(id);
+        if (el && typeof bootstrap !== 'undefined' && bootstrap.Toast) {
+            var toast = new bootstrap.Toast(el);
+            toast.show();
+            el.addEventListener('hidden.bs.toast', function () { el.remove(); });
+        }
+    }
+
     return {
         escapeHtml,
         debounce,
@@ -160,9 +172,7 @@ var M3 = (function () {
         getLikedItems,
         saveLikedItems,
         isLiked,
-        getReviews,
-        saveReview,
-        getReview,
+        showToast,
         renderCard,
         hashCode
     };

@@ -67,11 +67,15 @@
     function toggleLike(itemId) {
         const sid = String(itemId);
         const liked = M3.getLikedItems();
-        if (liked[sid]) { delete liked[sid]; }
+        const wasLiked = !!liked[sid];
+        if (wasLiked) { delete liked[sid]; }
         else {
             const item = filteredItems.find(i => String(i.id) === sid)
                       || masterList.find(i => String(i.id) === sid);
-            if (item) liked[sid] = item;
+            if (item) {
+                liked[sid] = item;
+                M3.showToast('\u2605 <strong>' + M3.escapeHtml(item.name) + '</strong> added to your favorites!', 'success', 3000);
+            }
         }
         M3.saveLikedItems(liked);
         firstVisibleRow = -1;
