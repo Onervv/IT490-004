@@ -34,12 +34,13 @@ class rabbitMQServer
 		}
 		$this->exchange = $this->machine[$server]["EXCHANGE"];
 		$this->queue = $this->machine[$server]["QUEUE"];
+		$this->routing_key = $this->machine[$server]["ROUTING_KEY"];
 	}
 
 	function process_message($msg)
 	{
 		// send the ack to clear the item from the queue
-		if ($msg->getRoutingKey() !== "*")
+		if ($msg->getRoutingKey() !== $this->routing_key)
     {
       return;
     }
@@ -166,6 +167,8 @@ class rabbitMQClient
 		}
 		$this->exchange = $this->machine[$server]["EXCHANGE"];
 		$this->queue = $this->machine[$server]["QUEUE"];
+		$this->routing_key = $this->machine[$server]["ROUTING_KEY"];
+
 	}
 
 	function process_response($response)
