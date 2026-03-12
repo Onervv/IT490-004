@@ -12,7 +12,7 @@ class rabbitMQServer
 	private $VHOST;
 	private $exchange;
 	private $queue;
-	private $routing_key = "*";
+	private $routing_key = '*';
 	private $exchange_type = "topic";
 	private $auto_delete = false;
 
@@ -34,12 +34,13 @@ class rabbitMQServer
 		}
 		$this->exchange = $this->machine[$server]["EXCHANGE"];
 		$this->queue = $this->machine[$server]["QUEUE"];
+                $this->routing_key = $this->machine[$server]["ROUTING_KEY"];
 	}
 
 	function process_message($msg)
 	{
 		// send the ack to clear the item from the queue
-		if ($msg->getRoutingKey() !== "*")
+		if ($msg->getRoutingKey() !== $this->routing_key)
     {
       return;
     }
@@ -144,7 +145,7 @@ class rabbitMQClient
 	private $VHOST;
 	private $exchange;
 	private $queue;
-	private $routing_key = "*";
+	private $routing_key = '*';
 	private $response_queue = array();
 	private $exchange_type = "topic";
 
@@ -166,6 +167,7 @@ class rabbitMQClient
 		}
 		$this->exchange = $this->machine[$server]["EXCHANGE"];
 		$this->queue = $this->machine[$server]["QUEUE"];
+                $this->routing_key = $this->machine[$server]["ROUTING_KEY"];
 	}
 
 	function process_response($response)
@@ -220,7 +222,7 @@ class rabbitMQClient
 			$this->conn_queue->bind($exchange->getName(),$this->routing_key);
 
 			$exchange->publish($json_message,$this->routing_key,AMQP_NOPARAM,array('reply_to'=>$callback_queue->getName(),'correlation_id'=>$uid));
-                        $this->response_queue[$uid] = "waiting";
+      $this->response_queue[$uid] = "waiting";
 			$callback_queue->consume(array($this,'process_response'));
 
 			$response = $this->response_queue[$uid];
@@ -267,6 +269,7 @@ class rabbitMQClient
 			die("failed to send message to exchange: ". $e->getMessage()."\n");
 		}
 	}
+         
 }
 ?>
 
