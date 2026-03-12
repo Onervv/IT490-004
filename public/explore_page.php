@@ -1,6 +1,6 @@
 <?php
 /**
- * Explore - Protected page
+ * Explore - Protected page with virtual scrolling card grid and search
  */
 ?>
 <!DOCTYPE html>
@@ -8,6 +8,7 @@
 <head>
     <title>Explore</title>
     <link rel="stylesheet" href="assets/css/bootstrap.css">
+    <link rel="stylesheet" href="assets/css/explore.css">
 </head>
 <body>
     <!-- Dashboard Navbar -->
@@ -44,42 +45,33 @@
     <div class="container mt-5">
         <h1>Explore</h1>
         <p class="lead">Discover new content and recommendations.</p>
-        
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mt-3">
-            <div class="col">
-                <div class="card bg-success h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">Trending</h5>
-                        <p class="card-text">Popular right now</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col">
-                <div class="card bg-warning h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">New Releases</h5>
-                        <p class="card-text">Fresh content</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col">
-                <div class="card bg-primary h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">For You</h5>
-                        <p class="card-text">Personalized picks</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col">
-                <div class="card bg-secondary h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">Categories</h5>
-                        <p class="card-text">Browse by genre</p>
-                    </div>
+
+        <!-- Explore Search Bar -->
+        <div class="explore-search-wrapper mb-4">
+            <form class="d-flex" id="exploreSearchForm">
+                <input class="form-control me-2" type="search" placeholder="Search artists, tracks..." aria-label="Search" id="exploreSearchInput" autocomplete="off">
+                <button class="btn btn-light" type="submit">Search</button>
+            </form>
+            <div id="exploreSearchResults" class="search-results-dropdown"></div>
+        </div>
+
+        <!-- Virtual scroll container for cards -->
+        <div id="virtualScrollViewport" class="virtual-scroll-viewport">
+            <div id="virtualScrollSpacer" class="virtual-scroll-spacer">
+                <div id="cardContainer" class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+                    <!-- Cards are rendered dynamically by explore.js -->
                 </div>
             </div>
         </div>
+        <!-- Infinite scroll sentinel -->
+        <div id="scrollSentinel" class="text-center py-3" style="display: none;">
+            <div class="spinner-border spinner-border-sm" role="status">
+                <span class="visually-hidden">Loading more...</span>
+            </div>
+        </div>
     </div>
+
+    <script src="js/explore.js" defer></script>
     
     <script>
         (function() {

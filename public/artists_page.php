@@ -1,6 +1,6 @@
 <?php
 /**
- * Artists - Protected page
+ * Artists - Protected page showing user's liked/starred items
  */
 ?>
 <!DOCTYPE html>
@@ -8,6 +8,7 @@
 <head>
     <title>Artists</title>
     <link rel="stylesheet" href="assets/css/bootstrap.css">
+    <link rel="stylesheet" href="assets/css/explore.css">
 </head>
 <body>
     <!-- Dashboard Navbar -->
@@ -42,44 +43,19 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 
     <div class="container mt-5">
-        <h1>Artists</h1>
-        <p class="lead">Browse and discover artists.</p>
+        <h1>Your Favorites</h1>
+        <p class="lead">Artists and tracks you've starred from the Explore page.</p>
+
+        <div id="artistsEmpty" class="alert alert-info mt-3" style="display: none;">
+            You haven't starred anything yet. Head over to <a href="explore_page.php">Explore</a> and hit the &#9734; on cards you like!
+        </div>
         
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mt-3">
-            <div class="col">
-                <div class="card h-100">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Artist 1</h5>
-                        <p class="card-text">Artist description</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col">
-                <div class="card h-100">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Artist 2</h5>
-                        <p class="card-text">Artist description</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col">
-                <div class="card h-100">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Artist 3</h5>
-                        <p class="card-text">Artist description</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col">
-                <div class="card h-100">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Artist 4</h5>
-                        <p class="card-text">Artist description</p>
-                    </div>
-                </div>
-            </div>
+        <div id="artistsCardContainer" class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mt-3">
+            <!-- Liked cards rendered by artists.js -->
         </div>
     </div>
+
+    <script src="js/artists.js" defer></script>
     
     <script>
         (function() {

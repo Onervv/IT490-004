@@ -88,34 +88,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         <div class="alert alert-success">
             <strong>Session Valid</strong> - You are authenticated.
         </div>
-
-        <!-- Dashboard Search Bar -->
-        <div class="dashboard-search-wrapper mb-4">
-            <form class="d-flex" id="dashboardSearchForm">
-                <input class="form-control me-2" type="search" placeholder="Search artists, tracks..." aria-label="Search" id="dashboardSearchInput" autocomplete="off">
-                <button class="btn btn-light" type="submit">Search</button>
-            </form>
-            <div id="dashboardSearchResults" class="search-results-dropdown"></div>
-        </div>
-
-        <!-- Virtual scroll container for cards -->
-        <div id="virtualScrollViewport" class="virtual-scroll-viewport">
-            <div id="virtualScrollSpacer" class="virtual-scroll-spacer">
-                <div id="cardContainer" class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
-                    <!-- Cards are rendered dynamically by dashboard.js -->
-                </div>
-            </div>
-        </div>
-        <!-- Infinite scroll sentinel -->
-        <div id="scrollSentinel" class="text-center py-3" style="display: none;">
-            <div class="spinner-border spinner-border-sm" role="status">
-                <span class="visually-hidden">Loading more...</span>
-            </div>
-        </div>
     </div>
     
     <link rel="stylesheet" href="assets/css/dashboard.css">
-    <script src="js/dashboard.js" defer></script>
 
     <script>
         (function() {
