@@ -1,5 +1,7 @@
 #!/usr/bin/php
 <?php
+
+// simulated RabbitMQ server for testing login requests; run with `php testRabbitMQServer.php`
 // includes now consolidated
 require_once __DIR__ . '/../includes/path.inc';
 require_once __DIR__ . '/../includes/get_host_info.inc';
@@ -173,25 +175,93 @@ function doLogout($sessionKey)
   return array('status' => 'ok', 'message' => 'logged out');
 }
 
+/**
+ * Fetch paginated artist data from the artist_info table.
+ * Supports optional keyword search (matches name or bio).
+ */
+function doGetArtists($offset, $limit, $search)
+{
+  try {
+    $db = getDBConnection();
+    if (!$db) {
+      return array('status' => 'error', 'message' => 'database connection failed');
+    }
+
+    $offset = max(0, intval($offset));
+    $limit  = min(500, max(1, intval($limit)));
+
+    if (!empty($search)) {
+      $pattern = '%' . $search . '%';
+
+      $countStmt = $db->prepare('SELECT COUNT(*) AS total FROM artist_info WHERE name LIKE ? OR bio LIKE ?');
+      $countStmt->bind_param('ss', $pattern, $pattern);
+
+      $stmt = $db->prepare('SELECT id, name, listeners, play_count, bio, url, fetched_at FROM artist_info WHERE name LIKE ? OR bio LIKE ? ORDER BY listeners DESC LIMIT ? OFFSET ?');
+      $stmt->bind_param('ssii', $pattern, $pattern, $limit, $offset);
+    } else {
+      $countStmt = $db->prepare('SELECT COUNT(*) AS total FROM artist_info');
+
+      $stmt = $db->prepare('SELECT id, name, listeners, play_count, bio, url, fetched_at FROM artist_info ORDER BY listeners DESC LIMIT ? OFFSET ?');
+      $stmt->bind_param('ii', $limit, $offset);
+    }
+
+    if (!$stmt || !$countStmt) {
+      return array('status' => 'error', 'message' => 'database error');
+    }
+
+    $countStmt->execute();
+    $total = intval($countStmt->get_result()->fetch_assoc()['total']);
+
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $artists = array();
+    while ($row = $result->fetch_assoc()) {
+      $artists[] = $row;
+    }
+
+    $db->close();
+
+    return array(
+      'status'  => 'ok',
+      'artists' => $artists,
+      'total'   => $total,
+      'offset'  => $offset,
+      'limit'   => $limit
+    );
+  } catch (Throwable $e) {
+    return array('status' => 'error', 'message' => 'server error: ' . $e->getMessage());
+  }
+}
+
 function requestProcessor($request)
 {
-  if(!isset($request['type']))
-  {
-    return "ERROR: unsupported message type";
-  }
-  
-  switch ($request['type'])
-  {
-    case "login":
-      return doLogin($request['username'],$request['password']);
-    case "register":
-      return doRegister($request['username'],$request['password']);
-    case "validate_session":
-      return doValidate($request['session_key']);
-    case "logout":
-      return doLogout($request['session_key']);
-    default:
-      return array("returnCode" => '0', 'message'=>"Server received request and processed");
+  try {
+    if(!isset($request['type']))
+    {
+      return "ERROR: unsupported message type";
+    }
+    
+    switch ($request['type'])
+    {
+      case "login":
+        return doLogin($request['username'],$request['password']);
+      case "register":
+        return doRegister($request['username'],$request['password']);
+      case "validate_session":
+        return doValidate($request['session_key']);
+      case "logout":
+        return doLogout($request['session_key']);
+      case "get_artists":
+        return doGetArtists(
+          $request['offset'] ?? 0,
+          $request['limit']  ?? 20,
+          $request['search'] ?? ''
+        );
+      default:
+        return array("returnCode" => '0', 'message'=>"Server received request and processed");
+    }
+  } catch (Throwable $e) {
+    return array('status' => 'error', 'message' => 'requestProcessor exception: ' . $e->getMessage());
   }
 }
 
