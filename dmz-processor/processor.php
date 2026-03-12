@@ -16,6 +16,7 @@ function lastfm($url, $api_key, $method, $extras = []) { //call api
 	 $extras);
 
  $endpoint = $url . "?" . http_build_query($query); //creates url
+
  $data = file_get_contents($endpoint);
 
   return json_decode($data, true); //returns data
@@ -80,10 +81,10 @@ function top_artists($url, $api) { //gets the top artists
     ];
 }
 
-function artist_info($url, $api, $name) { //gets the information on a certain artist
+function artist_info($url, $api, $name) { //gets the information on an artist
  echo "Artist Info \n";
 
- $data = lastfm($url, $api, "artist.getInfo", ["artist" => $name]); //artst.getInfo
+ $data = lastfm($url, $api, "artist.getInfo", ["artist" => $name]); //artist.getInfo
 
  if (!$data || !isset($data["artist"])) { //error checking
        	echo "No Data for Artist: $name\n";
@@ -117,12 +118,10 @@ function many_artists($url, $api) { //gets info for 300 artists
  $results = [];
  foreach ($data["artists"]["artist"] as $artist) { //loop through each artist
 	$name = $artist["name"] ?? "";
-	echo "Fetching: $name \n";
 
-	// get info for each artist
-	$info = lastfm($url, $api, "artist.getInfo", ["artist" => $name]);
+	$info = lastfm($url, $api, "artist.getInfo", ["artist" => $name]); //get info for each artist on the chart
 
-	if (!$info || !isset($info["artist"])) { //skip if no data
+	if (!$info || !isset($info["artist"])) { //skips if no data
 		echo "No data for: $name \n";
 		continue;
 	}
@@ -150,7 +149,7 @@ function requests($request) { //handles the requests
         return ["status" => "error", "message" => "unsupported type"];
 	}
 
- if($request['type'] == "weekly_charts") { //calls function in charge of the weekly charts
+ if($request['type'] == "weekly_charts") { //calls functions for the weekly charts
 	$tracks  = top_tracks($URL, $API);
        	$artists = top_artists($URL, $API);
         	return [
@@ -160,23 +159,24 @@ function requests($request) { //handles the requests
 
     } else if ($request["type"] == "artist") { //calls function in charge of artists
         $name = $request["name"] ?? "";
-        if ($name == "") {
+
+	if ($name == "") { //error checking
                 return ["status" => "error", "message" => "Missing artist name."];
         }
         $data = artist_info($URL, $API, $name);
-            return ["status" => "success", "data" => $data];
+        return ["status" => "success", "data" => $data];
 
     } else if ($request["type"] == "many_artists") {
-    $data = many_artists($URL, $API);
-    return ["status" => "success", "data" => $data];
+    	$data = many_artists($URL, $API);
+    	return ["status" => "success", "data" => $data];}
 
-    } else { //error checking if the request is unknown
-        echo "Unknown type: " . $request['type'] . "\n";
-        return ["status" => "error", "message" => "Unknown type: " . $request['type']];
-    }
+      else { //error checking
+        echo "Unknown type: " . $request['type'] . "\n"; }
 }
+
 $server = new rabbitMQServer(__DIR__ . '/../testRabbitMQ.ini', 'testServer3'); //connection to the broker
-echo"DMZ START\n";
+echo "DMZ START\n";
 $server->process_requests('requests');
+
 exit();
 ?>
