@@ -16,7 +16,7 @@ $activePage = 'artists';
 
     <div class="container mt-5">
         <h1>Your Favorites</h1>
-        <p class="lead">Artists and tracks you've starred from the Explore page.</p>
+        <p class="lead">Artists you've starred from the Explore page.</p>
 
         <div id="artistsEmpty" class="alert alert-info mt-3" style="display: none;">
             You haven't starred anything yet. Head over to <a href="explore_page.php">Explore</a> and hit the &#9734; on cards you like!

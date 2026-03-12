@@ -1,54 +1,77 @@
 /**
  * explore.js
  * ----------
- * Explore page: virtual scrolling, infinite scroll, search, star/like.
+ * Explore page: virtual scrolling, client-side search, star/like.
+ * Fetches ALL artist data in a single RabbitMQ call (avoids server
+ * crash on repeated requests), then does everything client-side.
  * Depends on shared.js (M3 namespace) being loaded first.
- *
- * TODO: Replace placeholder data source with real API calls.
  */
 
 (function () {
     'use strict';
 
     /* ── Config ─────────────────────────────────────────────────── */
-    const CARD_MIN_HEIGHT  = 220;
+    const CARD_MIN_HEIGHT  = 260;
     const COLS_PER_ROW     = 4;
-    const BATCH_SIZE       = 20;
     const SCROLL_THRESHOLD = 300;
     const DEBOUNCE_MS      = 120;
     const OVERSCAN_ROWS    = 2;
 
     /* ── State ──────────────────────────────────────────────────── */
-    let allItems = [], filteredItems = [];
-    let currentBatch = 0, isFetching = false, hasMore = true;
-    let activeSearch = '';
-    let firstVisibleRow = 0, lastVisibleRow = 0;
+    let masterList    = [];   // full dataset from API (never mutated after load)
+    let filteredItems = [];   // current view (search-filtered subset)
+    let dataLoaded    = false;
+    let firstVisibleRow = -1, lastVisibleRow = -1;
 
-    /* ── DOM refs (resolved in init) ────────────────────────────── */
+    /* ── DOM refs ───────────────────────────────────────────────── */
     let viewport, spacer, cardContainer, sentinel;
     let searchInput, searchForm, searchDropdown;
 
-    /* ── Placeholder data ───────────────────────────────────────── */
-    // TODO: Replace with real API fetch
-    function generatePlaceholderItems(offset, limit) {
-        const GENRES   = ['Pop','Rock','Jazz','Hip-Hop','R&B','Electronic','Classical','Country'];
-        const ARTISTS  = ['The Weeknd','Doja Cat','Tyler the Creator','SZA','Kendrick Lamar','Frank Ocean','Bad Bunny','Billie Eilish','Drake','Ariana Grande','Post Malone','Dua Lipa','Travis Scott','Lana Del Rey','Metro Boomin','J. Cole'];
-        const BG       = ['bg-primary','bg-secondary','bg-success','bg-danger','bg-warning','bg-info','bg-light','bg-dark'];
-        const MAX = 200; // TODO: remove cap once real API is wired up
-        const items = [];
-        for (let i = 0; i < limit; i++) {
-            const idx = offset + i;
-            if (idx >= MAX) break;
-            items.push({ id: idx, title: `Track #${idx+1}`, artist: ARTISTS[idx%ARTISTS.length], genre: GENRES[idx%GENRES.length], bgClass: BG[idx%BG.length], textClass: idx%BG.length===7 ? 'text-white' : '' });
+    /* ── One-shot API fetch ─────────────────────────────────────── */
+
+    async function fetchAllArtists() {
+        sentinel.style.display = 'block';
+
+        try {
+            const res = await fetch('explore_api.php?offset=0&limit=500');
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+            const text = await res.text();
+            let data;
+            try { data = JSON.parse(text); } catch {
+                console.error('Non-JSON response:', text.substring(0, 200));
+                throw new Error('Invalid JSON from API');
+            }
+
+            if (data.status !== 'ok') {
+                console.error('API returned:', data);
+                throw new Error(data.message || 'API error');
+            }
+
+            masterList    = data.artists || [];
+            filteredItems = masterList;
+            dataLoaded    = true;
+
+            updateSpacer();
+            renderVisibleCards();
+        } catch (err) {
+            console.error('Failed to load artists:', err);
+            cardContainer.innerHTML =
+                '<div class="col-12"><div class="alert alert-danger">Failed to load artist data. Make sure the API server is running on the DB VM, then refresh.</div></div>';
         }
-        return items;
+
+        sentinel.style.display = 'none';
     }
 
     /* ── Like toggle ────────────────────────────────────────────── */
     function toggleLike(itemId) {
         const liked = M3.getLikedItems();
         if (liked[itemId]) { delete liked[itemId]; }
-        else { const item = allItems.find(i => i.id === itemId); if (item) liked[itemId] = item; }
+        else {
+            const item = filteredItems.find(i => i.id === itemId)
+                      || masterList.find(i => i.id === itemId);
+            if (item) liked[itemId] = item;
+        }
         M3.saveLikedItems(liked);
         firstVisibleRow = -1;
         renderVisibleCards();
@@ -60,6 +83,14 @@
     function updateSpacer() { spacer.style.minHeight = totalRows() * rowHeight() + 'px'; }
 
     function renderVisibleCards() {
+        if (!filteredItems.length) {
+            cardContainer.innerHTML = dataLoaded
+                ? '<div class="col-12 text-center text-muted py-4">No artists match your search.</div>'
+                : '';
+            cardContainer.style.transform = '';
+            return;
+        }
+
         const scrollTop = window.scrollY || document.documentElement.scrollTop;
         const rh = rowHeight();
         const relScroll = Math.max(0, scrollTop - (viewport.getBoundingClientRect().top + scrollTop));
@@ -82,28 +113,29 @@
         );
     }
 
-    /* ── Infinite scroll ────────────────────────────────────────── */
-    async function loadNextBatch() {
-        if (isFetching || !hasMore) return;
-        isFetching = true; sentinel.style.display = 'block';
-        const items = generatePlaceholderItems(currentBatch * BATCH_SIZE, BATCH_SIZE);
-        if (items.length < BATCH_SIZE) hasMore = false;
-        allItems = allItems.concat(items); currentBatch++;
-        applyFilter(); updateSpacer(); renderVisibleCards();
-        sentinel.style.display = 'none'; isFetching = false;
-    }
+    /* ── Client-side search / filter ────────────────────────────── */
 
-    /* ── Search / filter ────────────────────────────────────────── */
-    function applyFilter() {
-        if (!activeSearch) { filteredItems = allItems; return; }
-        const t = activeSearch.toLowerCase();
-        filteredItems = allItems.filter(i => i.title.toLowerCase().includes(t) || i.artist.toLowerCase().includes(t) || i.genre.toLowerCase().includes(t));
+    function applyFilter(term) {
+        if (!term) { filteredItems = masterList; return; }
+        const t = term.toLowerCase();
+        filteredItems = masterList.filter(i =>
+            (i.name && i.name.toLowerCase().includes(t)) ||
+            (i.bio  && i.bio.toLowerCase().includes(t))
+        );
     }
 
     function updateDropdown() {
-        if (!activeSearch || !filteredItems.length) { searchDropdown.innerHTML = ''; searchDropdown.style.display = 'none'; return; }
+        const term = searchInput.value.trim();
+        if (!term || !filteredItems.length) {
+            searchDropdown.innerHTML = ''; searchDropdown.style.display = 'none'; return;
+        }
         const max = 8, preview = filteredItems.slice(0, max);
-        let html = preview.map(i => `<button type="button" class="dropdown-item search-result-item" data-target-id="${i.id}"><strong>${M3.escapeHtml(i.title)}</strong> &mdash; ${M3.escapeHtml(i.artist)}</button>`).join('');
+        let html = preview.map(i =>
+            `<button type="button" class="dropdown-item search-result-item" data-target-id="${i.id}">
+                <strong>${M3.escapeHtml(i.name)}</strong>
+                <span class="text-muted small ms-2">${M3.formatNumber(i.listeners)} listeners</span>
+            </button>`
+        ).join('');
         if (filteredItems.length > max) html += `<span class="dropdown-item text-muted small">+${filteredItems.length - max} more</span>`;
         searchDropdown.innerHTML = html; searchDropdown.style.display = 'block';
         searchDropdown.querySelectorAll('.search-result-item').forEach(btn =>
@@ -134,24 +166,39 @@
         searchDropdown = document.getElementById('exploreSearchResults');
         if (!viewport || !cardContainer) return;
 
-        const dScroll = M3.debounce(() => {
-            renderVisibleCards();
-            if (document.documentElement.scrollHeight - (window.scrollY + window.innerHeight) < SCROLL_THRESHOLD && hasMore && !isFetching) loadNextBatch();
-        }, DEBOUNCE_MS);
-        window.addEventListener('scroll', dScroll);
-        window.addEventListener('resize', M3.debounce(() => { updateSpacer(); renderVisibleCards(); }, DEBOUNCE_MS));
+        /* Scroll / resize → re-render visible window */
+        window.addEventListener('scroll',
+            M3.debounce(() => renderVisibleCards(), DEBOUNCE_MS));
+        window.addEventListener('resize',
+            M3.debounce(() => { updateSpacer(); firstVisibleRow = -1; renderVisibleCards(); }, DEBOUNCE_MS));
 
+        /* Client-side search (no extra API calls) */
         searchInput.addEventListener('input', M3.debounce(() => {
-            activeSearch = searchInput.value.trim(); applyFilter(); updateSpacer(); firstVisibleRow = -1; renderVisibleCards(); updateDropdown();
+            const term = searchInput.value.trim();
+            applyFilter(term);
+            updateSpacer();
+            firstVisibleRow = -1; lastVisibleRow = -1;
+            renderVisibleCards();
+            updateDropdown();
         }, DEBOUNCE_MS));
-        searchForm.addEventListener('submit', e => {
-            e.preventDefault(); activeSearch = searchInput.value.trim(); applyFilter(); updateSpacer(); firstVisibleRow = -1; renderVisibleCards();
-            if (filteredItems.length) jumpToCard(filteredItems[0].id); searchDropdown.style.display = 'none';
-        });
-        document.addEventListener('click', e => { if (!searchDropdown.contains(e.target) && e.target !== searchInput) searchDropdown.style.display = 'none'; });
 
-        new IntersectionObserver(entries => { if (entries[0].isIntersecting && hasMore && !isFetching) loadNextBatch(); }, { rootMargin: `${SCROLL_THRESHOLD}px` }).observe(sentinel);
-        loadNextBatch();
+        searchForm.addEventListener('submit', e => {
+            e.preventDefault();
+            const term = searchInput.value.trim();
+            applyFilter(term);
+            updateSpacer();
+            firstVisibleRow = -1; lastVisibleRow = -1;
+            renderVisibleCards();
+            if (filteredItems.length) jumpToCard(filteredItems[0].id);
+            searchDropdown.style.display = 'none';
+        });
+
+        document.addEventListener('click', e => {
+            if (!searchDropdown.contains(e.target) && e.target !== searchInput) searchDropdown.style.display = 'none';
+        });
+
+        /* Single fetch on page load */
+        fetchAllArtists();
     }
 
     document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', init) : init();

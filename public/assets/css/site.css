@@ -126,7 +126,12 @@
     animation: highlightPulse 0.8s ease-out 2;
 }
 
-/* ── Sentinel spinner ─────────────────────────────────────────── */
+/* ── Card footer links ─────────────────────────────────────────── */
+.card-footer a.text-white-50:hover {
+    color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* ── Empty / loading state ────────────────────────────────────── */
 #scrollSentinel {
     min-height: 48px;
 }
