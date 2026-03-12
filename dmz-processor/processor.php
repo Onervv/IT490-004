@@ -42,6 +42,7 @@ function top_tracks($url, $api) { //get the top tracks
             	"play_count" => (int)($track["playcount"] ),
             	"listeners" => (int)($track["listeners"] ),
 		"url" => $track["url"],
+//		"mbid" => $track["mbid"],
 		];
     }
 
@@ -67,9 +68,10 @@ function top_artists($url, $api) { //gets the top artists
  foreach ($data["artists"]["artist"] as $i => $artist) { //puts them into a list
 	$artists[] = [
 		"rank" => $i + 1,
-            	"name" => $artist["name"] ?? "",
+            	"name" => $artist["name"],
             	"listeners"  => (int)($artist["listeners"] ?? 0),
             	"play_count" => (int)($artist["playcount"] ?? 0),
+//		"mbid" => $artist["mbid"],
 	];
     }
 
@@ -81,7 +83,7 @@ function top_artists($url, $api) { //gets the top artists
     ];
 }
 
-function artist_info($url, $api, $name) { //gets the information on an artist
+/*function artist_info($url, $api, $name) { //gets the information on an artist
  echo "Artist Info \n";
 
  $data = lastfm($url, $api, "artist.getInfo", ["artist" => $name]); //artist.getInfo
@@ -101,9 +103,11 @@ function artist_info($url, $api, $name) { //gets the information on an artist
             "play_count" => (int)($data["artist"]["stats"]["playcount"] ),
             "bio" => trim(strip_tags($data["artist"]["bio"]["summary"] )),
 	    "url" => $data["artist"]["url"],
+	    "mbid" => $data["artist"]["mbid"],
         ]
     ];
 }
+*/
 
 function many_artists($url, $api) { //gets info for 300 artists
  echo "300 Artists \n";
@@ -119,7 +123,7 @@ function many_artists($url, $api) { //gets info for 300 artists
  foreach ($data["artists"]["artist"] as $artist) { //loop through each artist
 	$name = $artist["name"] ?? "";
 
-	$info = lastfm($url, $api, "artist.getInfo", ["artist" => $name]); //get info for each artist on the chart
+	$info = lastfm($url, $api, "artist.getInfo", ["artist" => $name]); //gets info
 
 	if (!$info || !isset($info["artist"])) { //skips if no data
 		echo "No data for: $name \n";
@@ -127,11 +131,12 @@ function many_artists($url, $api) { //gets info for 300 artists
 	}
 
 	$results[] = [
-		"name"       => $info["artist"]["name"]                    ?? "",
-		"listeners"  => (int)($info["artist"]["stats"]["listeners"] ?? 0),
-		"play_count" => (int)($info["artist"]["stats"]["playcount"]  ?? 0),
-		"bio"        => trim(strip_tags($info["artist"]["bio"]["summary"] ?? "")),
-		"url"        => $info["artist"]["url"]                     ?? "",
+		"name"       => $info["artist"]["name"],
+		"listeners"  => (int)($info["artist"]["stats"]["listeners"]),
+		"play_count" => (int)($info["artist"]["stats"]["playcount"]),
+		"bio"        => trim(strip_tags($info["artist"]["bio"]["summary"])),
+		"url"        => $info["artist"]["url"],
+//		"mbid" => $info["artist"]["mbid"],
 	];
  }
  echo "DONE \n";
@@ -157,14 +162,14 @@ function requests($request) { //handles the requests
                		"tracks"  => $tracks,
                 	"artists" => $artists];
 
-    } else if ($request["type"] == "artist") { //calls function in charge of artists
-        $name = $request["name"] ?? "";
+//    } else if ($request["type"] == "artist") { //calls function in charge of artists
+  //      $name = $request["name"] ?? "";
 
-	if ($name == "") { //error checking
-                return ["status" => "error", "message" => "Missing artist name."];
-        }
-        $data = artist_info($URL, $API, $name);
-        return ["status" => "success", "data" => $data];
+//	if ($name == "") { //error checking
+  //              return ["status" => "error", "message" => "Missing artist name."]; }
+
+//        $data = artist_info($URL, $API, $name);
+  //      return ["status" => "success", "data" => $data];
 
     } else if ($request["type"] == "many_artists") {
     	$data = many_artists($URL, $API);
