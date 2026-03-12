@@ -1,0 +1,73 @@
+/*
+ * dashboard.css
+ * Styles for the dashboard virtual-scroll card grid and search bar.
+ */
+
+/* ── Search bar ───────────────────────────────────────────────── */
+.dashboard-search-wrapper {
+    position: relative;
+    max-width: 500px;
+}
+
+.search-results-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1050;
+    background: #fff;
+    border: 1px solid rgba(0,0,0,.15);
+    border-radius: 0 0 .375rem .375rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,.12);
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.search-results-dropdown .dropdown-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: .45rem .75rem;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: .9rem;
+}
+
+.search-results-dropdown .dropdown-item:hover {
+    background-color: #f0f0f0;
+}
+
+/* ── Virtual scroll viewport ──────────────────────────────────── */
+.virtual-scroll-viewport {
+    position: relative;
+    overflow: visible;        /* page-level scroll, not inner scroll */
+}
+
+.virtual-scroll-spacer {
+    position: relative;
+    min-height: 0;
+}
+
+/* ── Card highlight on search jump ────────────────────────────── */
+.card-highlight .card {
+    outline: 3px solid #198754;
+    outline-offset: 2px;
+    transition: outline-color 0.3s ease;
+}
+
+@keyframes highlightPulse {
+    0%   { box-shadow: 0 0 0 0 rgba(25,135,84,.5); }
+    70%  { box-shadow: 0 0 0 10px rgba(25,135,84,0); }
+    100% { box-shadow: 0 0 0 0 rgba(25,135,84,0); }
+}
+
+.card-highlight .card {
+    animation: highlightPulse 0.8s ease-out 2;
+}
+
+/* ── Sentinel spinner ─────────────────────────────────────────── */
+#scrollSentinel {
+    min-height: 48px;
+}

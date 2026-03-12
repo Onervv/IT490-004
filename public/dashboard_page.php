@@ -88,83 +88,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         <div class="alert alert-success">
             <strong>Session Valid</strong> - You are authenticated.
         </div>
-        
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
-            <div class="col">
-                <div class="card bg-primary h-100">
-                    <div class="card-header">Header</div>
-                    <div class="card-body">
-                        <h4 class="card-title">Primary card title</h4>
-                        <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-                    </div>
+
+        <!-- Dashboard Search Bar -->
+        <div class="dashboard-search-wrapper mb-4">
+            <form class="d-flex" id="dashboardSearchForm">
+                <input class="form-control me-2" type="search" placeholder="Search artists, tracks..." aria-label="Search" id="dashboardSearchInput" autocomplete="off">
+                <button class="btn btn-light" type="submit">Search</button>
+            </form>
+            <div id="dashboardSearchResults" class="search-results-dropdown"></div>
+        </div>
+
+        <!-- Virtual scroll container for cards -->
+        <div id="virtualScrollViewport" class="virtual-scroll-viewport">
+            <div id="virtualScrollSpacer" class="virtual-scroll-spacer">
+                <div id="cardContainer" class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+                    <!-- Cards are rendered dynamically by dashboard.js -->
                 </div>
             </div>
-            <div class="col">
-                <div class="card bg-secondary h-100">
-                    <div class="card-header">Header</div>
-                    <div class="card-body">
-                        <h4 class="card-title">Secondary card title</h4>
-                        <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col">
-                <div class="card bg-success h-100">
-                    <div class="card-header">Header</div>
-                    <div class="card-body">
-                        <h4 class="card-title">Success card title</h4>
-                        <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col">
-                <div class="card bg-danger h-100">
-                    <div class="card-header">Header</div>
-                    <div class="card-body">
-                        <h4 class="card-title">Danger card title</h4>
-                        <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col">
-                <div class="card bg-warning h-100">
-                    <div class="card-header">Header</div>
-                    <div class="card-body">
-                        <h4 class="card-title">Warning card title</h4>
-                        <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col">
-                <div class="card bg-info h-100">
-                    <div class="card-header">Header</div>
-                    <div class="card-body">
-                        <h4 class="card-title">Info card title</h4>
-                        <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col">
-                <div class="card bg-light h-100">
-                    <div class="card-header">Header</div>
-                    <div class="card-body">
-                        <h4 class="card-title">Light card title</h4>
-                        <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col">
-                <div class="card text-white bg-dark h-100">
-                    <div class="card-header">Header</div>
-                    <div class="card-body">
-                        <h4 class="card-title">Dark card title</h4>
-                        <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-                    </div>
-                </div>
+        </div>
+        <!-- Infinite scroll sentinel -->
+        <div id="scrollSentinel" class="text-center py-3" style="display: none;">
+            <div class="spinner-border spinner-border-sm" role="status">
+                <span class="visually-hidden">Loading more...</span>
             </div>
         </div>
     </div>
     
+    <link rel="stylesheet" href="assets/css/dashboard.css">
+    <script src="js/dashboard.js" defer></script>
+
     <script>
         (function() {
             const sessionKey = sessionStorage.getItem('session_key');
