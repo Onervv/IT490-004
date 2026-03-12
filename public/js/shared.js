@@ -11,8 +11,9 @@ var M3 = (function () {
     /* ── HTML escaping ──────────────────────────────────────────── */
 
     function escapeHtml(str) {
+        if (str == null) return '';
         const div = document.createElement('div');
-        div.appendChild(document.createTextNode(str));
+        div.appendChild(document.createTextNode(String(str)));
         return div.innerHTML;
     }
 
@@ -53,14 +54,52 @@ var M3 = (function () {
         localStorage.setItem(getLikedKey(), JSON.stringify(liked));
     }
 
+    /** Always use string keys for consistent lookup */
     function isLiked(itemId) {
-        return !!getLikedItems()[itemId];
+        return !!getLikedItems()[String(itemId)];
+    }
+
+    /* ── Reviews (per-user, localStorage) ──────────────────────── */
+
+    function getReviewsKey() {
+        const username = sessionStorage.getItem('username') || '_anon';
+        return `artist_reviews_${username}`;
+    }
+
+    function getReviews() {
+        try {
+            return JSON.parse(localStorage.getItem(getReviewsKey())) || {};
+        } catch { return {}; }
+    }
+
+    function saveReview(artistId, text) {
+        const reviews = getReviews();
+        const key = String(artistId);
+        if (text.trim()) {
+            reviews[key] = { text: text.trim(), date: new Date().toLocaleDateString() };
+        } else {
+            delete reviews[key];
+        }
+        localStorage.setItem(getReviewsKey(), JSON.stringify(reviews));
+    }
+
+    function getReview(artistId) {
+        return getReviews()[String(artistId)] || null;
     }
 
     /* ── Card HTML ──────────────────────────────────────────────── */
 
-    // Bg colour palette (dark backgrounds for white text)
-    const BG_CLASSES = ['bg-primary','bg-secondary','bg-success','bg-danger','bg-info','bg-dark'];
+    // Dark-only palette so white text is always readable
+    const BG_PALETTE = [
+        { bg: '#1a1a2e', border: '#16213e' },
+        { bg: '#0f3460', border: '#1a1a5e' },
+        { bg: '#533483', border: '#4a2d7a' },
+        { bg: '#1b4332', border: '#2d6a4f' },
+        { bg: '#7b2d26', border: '#9b3a30' },
+        { bg: '#2c3e50', border: '#34495e' },
+        { bg: '#4a1942', border: '#6b2a63' },
+        { bg: '#1c3879', border: '#2a4a8c' },
+    ];
 
     /**
      * Build the HTML for a single artist card with a star button.
@@ -68,38 +107,48 @@ var M3 = (function () {
      * @param {boolean} removable - if true, star acts as "remove" (artists page)
      */
     function renderCard(item, removable) {
-        const liked     = removable || isLiked(item.id);
+        const sid       = String(item.id); // always string
+        const liked     = removable || isLiked(sid);
         const starClass = liked ? 'star-btn starred' : 'star-btn';
         const starFill  = liked ? '&#9733;' : '&#9734;';
         const tip       = liked ? 'Remove from favorites' : 'Add to favorites';
 
-        const bgClass   = BG_CLASSES[item.id % BG_CLASSES.length];
+        const palette   = BG_PALETTE[Math.abs(hashCode(item.name || sid)) % BG_PALETTE.length];
         const bioShort  = item.bio
             ? (item.bio.length > 120 ? item.bio.substring(0, 120) + '\u2026' : item.bio)
             : '';
 
         const urlBlock = item.url
-            ? `<div class="card-footer bg-transparent border-top-0 pt-0">
-                 <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener"
-                    class="small text-white-50 text-decoration-none">View on Last.fm &nearr;</a>
-               </div>`
+            ? `<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener"
+                  class="small text-decoration-none" style="color:rgba(255,255,255,.6)">View on Last.fm &nearr;</a>`
             : '';
 
         return `
-            <div class="col card-item" data-item-id="${item.id}">
-                <div class="card ${bgClass} text-white h-100 position-relative" style="overflow:hidden">
-                    <button type="button" class="${starClass}" data-like-id="${item.id}" title="${tip}">${starFill}</button>
+            <div class="col card-item" data-item-id="${sid}">
+                <div class="card h-100 position-relative border-0 shadow-sm"
+                     style="overflow:hidden;background:${palette.bg};color:#fff;border-left:4px solid ${palette.border}!important">
+                    <button type="button" class="${starClass}" data-like-id="${sid}" title="${tip}">${starFill}</button>
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title mb-1">${escapeHtml(item.name || 'Unknown')}</h5>
-                        <p class="card-text small flex-grow-1 mb-2" style="opacity:.85">${escapeHtml(bioShort)}</p>
-                        <div class="d-flex gap-2 flex-wrap mt-auto">
-                            <span class="badge bg-light text-dark">\uD83D\uDC64 ${formatNumber(item.listeners)} listeners</span>
-                            <span class="badge bg-light text-dark">\u25B6 ${formatNumber(item.play_count)} plays</span>
+                        <p class="card-text small flex-grow-1 mb-2" style="opacity:.75">${escapeHtml(bioShort)}</p>
+                        <div class="d-flex gap-2 flex-wrap mt-auto mb-1">
+                            <span class="badge" style="background:rgba(255,255,255,.15)">\uD83D\uDC64 ${formatNumber(item.listeners)} listeners</span>
+                            <span class="badge" style="background:rgba(255,255,255,.15)">\u25B6 ${formatNumber(item.play_count)} plays</span>
                         </div>
+                        ${urlBlock}
                     </div>
-                    ${urlBlock}
                 </div>
             </div>`;
+    }
+
+    /** Simple string hash for deterministic palette assignment by name */
+    function hashCode(str) {
+        let h = 0;
+        for (let i = 0; i < str.length; i++) {
+            h = ((h << 5) - h) + str.charCodeAt(i);
+            h |= 0;
+        }
+        return h;
     }
 
     /* ── Public API ─────────────────────────────────────────────── */
@@ -111,6 +160,10 @@ var M3 = (function () {
         getLikedItems,
         saveLikedItems,
         isLiked,
-        renderCard
+        getReviews,
+        saveReview,
+        getReview,
+        renderCard,
+        hashCode
     };
 })();

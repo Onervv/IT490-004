@@ -16,14 +16,14 @@ $activePage = 'artists';
 
     <div class="container mt-5">
         <h1>Your Favorites</h1>
-        <p class="lead">Artists you've starred from the Explore page.</p>
+        <p class="lead">Artists you've starred. Write reviews and share your thoughts.</p>
 
         <div id="artistsEmpty" class="alert alert-info mt-3" style="display: none;">
             You haven't starred anything yet. Head over to <a href="explore_page.php">Explore</a> and hit the &#9734; on cards you like!
         </div>
         
-        <div id="artistsCardContainer" class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mt-3">
-            <!-- Liked cards rendered by artists.js -->
+        <div id="artistsCardContainer" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mt-3">
+            <!-- Liked cards + reviews rendered by artists.js -->
         </div>
     </div>
 

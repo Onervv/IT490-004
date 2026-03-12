@@ -91,24 +91,6 @@
     transform: scale(1.2);
 }
 
-/* Light / warning cards: use a light backdrop instead */
-.bg-light .star-btn,
-.bg-warning .star-btn {
-    color: rgba(0, 0, 0, 0.45);
-    background: rgba(255, 255, 255, 0.5);
-    text-shadow: none;
-}
-.bg-light .star-btn:hover,
-.bg-warning .star-btn:hover {
-    color: #ffc107;
-    background: rgba(255, 255, 255, 0.7);
-}
-.bg-light .star-btn.starred,
-.bg-warning .star-btn.starred {
-    color: #ffc107;
-    background: rgba(255, 255, 255, 0.6);
-}
-
 /* ── Card highlight on search jump ────────────────────────────── */
 .card-highlight .card {
     outline: 3px solid #198754;
@@ -126,12 +108,35 @@
     animation: highlightPulse 0.8s ease-out 2;
 }
 
-/* ── Card footer links ─────────────────────────────────────────── */
-.card-footer a.text-white-50:hover {
-    color: rgba(255, 255, 255, 0.85) !important;
-}
-
 /* ── Empty / loading state ────────────────────────────────────── */
 #scrollSentinel {
     min-height: 48px;
+}
+
+/* ── Artist review section ────────────────────────────────────── */
+.card-item-wrap {
+    display: flex;
+    flex-direction: column;
+}
+
+.card-item-wrap .card-item {
+    flex: 1;
+}
+
+.review-display {
+    border: 1px solid rgba(0,0,0,.1);
+}
+
+.review-display p {
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.review-textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+.review-editor .char-count {
+    font-size: .75rem;
 }

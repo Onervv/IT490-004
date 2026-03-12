@@ -65,12 +65,13 @@
 
     /* ── Like toggle ────────────────────────────────────────────── */
     function toggleLike(itemId) {
+        const sid = String(itemId);
         const liked = M3.getLikedItems();
-        if (liked[itemId]) { delete liked[itemId]; }
+        if (liked[sid]) { delete liked[sid]; }
         else {
-            const item = filteredItems.find(i => i.id === itemId)
-                      || masterList.find(i => i.id === itemId);
-            if (item) liked[itemId] = item;
+            const item = filteredItems.find(i => String(i.id) === sid)
+                      || masterList.find(i => String(i.id) === sid);
+            if (item) liked[sid] = item;
         }
         M3.saveLikedItems(liked);
         firstVisibleRow = -1;
@@ -109,7 +110,7 @@
         cardContainer.style.transform = `translateY(${first * rh}px)`;
 
         cardContainer.querySelectorAll('.star-btn').forEach(btn =>
-            btn.addEventListener('click', e => { e.stopPropagation(); toggleLike(parseInt(btn.dataset.likeId, 10)); })
+            btn.addEventListener('click', e => { e.stopPropagation(); toggleLike(btn.dataset.likeId); })
         );
     }
 
