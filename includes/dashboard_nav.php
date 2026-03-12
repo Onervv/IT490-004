@@ -6,7 +6,7 @@
  *   $activePage = 'explore';
  *   include __DIR__ . '/../includes/dashboard_nav.php';
  *
- * Valid $activePage values: dashboard, artists, tracks, playground, explore
+ * Valid $activePage values: dashboard, artists, tracks, playground, explore, reviews
  */
 $activePage = $activePage ?? '';
 ?>
@@ -32,6 +32,9 @@ $activePage = $activePage ?? '';
                 </li>
                 <li class="nav-item">
                     <a class="nav-link <?= $activePage === 'explore' ? 'active' : '' ?>" href="explore_page.php">Explore</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= $activePage === 'reviews' ? 'active' : '' ?>" href="reviews_page.php">Reviews</a>
                 </li>
             </ul>
             <a href="#" id="logoutBtn" class="btn btn-danger">Logout</a>
