@@ -34,16 +34,16 @@ function storeartists($artists)
  function artistinfo($request)
  {
  $db = db();
- // 1. Make sure we actually have data to process
+ // checks db and payload
  if (!$db || empty($request['data']['payload']))
  {
  echo "FAILED: Database connection failed OR payload is empty.\n";
  return array("status"=>"fail", "message"=>"No artist info to store"); 
 }
- // 2. Extract the massive array of artists and the date
+ // gets artists
 $artists_list = $request['data']['payload'];
  $fetched_at = $request['data']['fetched_at']; 
-// 3. Prepare the Upsert statement ONCE (outside the loop for speed)
+// inserts info into artistinto table
  $stmt = $db->prepare("INSERT INTO artist_info (name, listeners, play_count, bio, url, fetched_at) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE 
 listeners = VALUES(listeners), play_count = VALUES(play_count), bio = VALUES(bio), fetched_at = VALUES(fetched_at)");
  if (!$stmt)
@@ -51,14 +51,12 @@ listeners = VALUES(listeners), play_count = VALUES(play_count), bio = VALUES(bio
  echo "MYSQL PREPARE ERROR: " . $db->error . "\n"; return array("status"=>"fail", "message"=>"SQL Prepare Failed"); 
 }
  $success_count = 0;
- // 4. Loop through the massive JSON array and insert/update every single artist
  foreach ($artists_list as $artist)
  {
  $stmt->bind_param("siisss", $artist['name'], $artist['listeners'], $artist['play_count'], $artist['bio'], $artist['url'], $fetched_at );
  if (!$stmt->execute()) 
 {
  echo "MYSQL EXECUTE ERROR on artist " . $artist['name'] . ": " . $stmt->error . "\n";
- // We don't return here, we just let it keep looping to save the rest of the artists! 
 }
 else { $success_count++;
 }
