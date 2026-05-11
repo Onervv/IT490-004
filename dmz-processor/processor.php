@@ -24,7 +24,7 @@ function lastfm($url, $api_key, $method, $extras=[]) { //call api
 function many_artists($url, $api) { //gets info for 300 artists
  echo "Artists \n";
 
- $top_artists = lastfm($url, $api, "chart.getTopArtists", ["limit" => 100000]); //limit # of artists
+ $top_artists = lastfm($url, $api, "chart.getTopArtists", ["limit" => 1000]); //limit # of artists
 
  if (!$top_artists || !isset($top_artists["artists"]["artist"])) { //error checking
 	echo "No Artists Data \n";
@@ -63,7 +63,7 @@ function many_artists($url, $api) { //gets info for 300 artists
 function many_tracks($url, $api) { //many tracks
  echo "Tracks \n";
 
- $top_tracks = lastfm($url, $api, "chart.getTopTracks",["limit" => 100000]) ; //chart.getTopTracks
+ $top_tracks = lastfm($url, $api, "chart.getTopTracks",["limit" => 1000]) ; //chart.getTopTracks
 
  if (!$top_tracks || !isset($top_tracks["tracks"]["track"])) { //checks for error
 	echo "No Track Data";
